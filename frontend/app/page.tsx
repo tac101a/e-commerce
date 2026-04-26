@@ -11,7 +11,6 @@ import { CartSheet } from '@/components/cart-sheet';
 import { TelemetryWidget } from '@/components/telemetry-widget';
 import { Product } from '@/components/product-card';
 import { logPageView } from '@/lib/tracking';
-import { useCartStore } from '@/lib/cart-store';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import { Activity, Zap } from 'lucide-react';
@@ -21,7 +20,6 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const { toast } = useToast();
-  const { addItem, openCart } = useCartStore();
 
   // Log page view on mount
   useEffect(() => {
@@ -52,8 +50,6 @@ export default function Home() {
   };
 
   const handleAddToCart = (product: Product) => {
-    addItem(product);
-    openCart();
     toast({
       title: 'Added to Cart',
       description: `${product.name} added. Check console for telemetry.`,

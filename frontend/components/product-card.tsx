@@ -21,6 +21,7 @@ export interface Product {
 interface ProductCardProps {
   product: Product;
   onProductClick?: (product: Product) => void;
+  onAddToCart?: (product: Product) => void;
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -32,7 +33,7 @@ const categoryIcons: Record<string, React.ElementType> = {
   Gaming: Gamepad2,
 };
 
-export function ProductCard({ product, onProductClick }: ProductCardProps) {
+export function ProductCard({ product, onProductClick, onAddToCart }: ProductCardProps) {
   const { addItem, openCart } = useCartStore();
 
   const handleCardClick = () => {
@@ -76,6 +77,8 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
 
     // Open cart sheet
     openCart();
+
+    onAddToCart?.(product);
   };
 
   const discount = product.originalPrice 
