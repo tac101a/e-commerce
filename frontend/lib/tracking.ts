@@ -2,29 +2,32 @@
 // All events are logged with timestamps and sent via fire-and-forget HTTP POST
 
 export type EventType =
-  | 'page_view'
-  | 'search'
-  | 'category_filter'
-  | 'product_click'
-  | 'product_view'
-  | 'add_to_cart'
-  | 'login_click'
-  | 'guest_click'
-  | 'navbar_click'
-  | 'back_click'
-  | 'LOGIN_SUCCESS'
-  | 'LOGOUT'
-  | 'CART_UPDATE'
-  | 'CART_OPEN'
-  | 'CHECKOUT_INITIATE'
-  | 'PURCHASE_COMPLETED'
-  | 'ML_TOGGLE'
-  | 'SIGNUP_SUCCESS'
-  | 'REGISTER_SUCCESS'
-  | 'NAVIGATE_HOME';
+  | "page_view"
+  | "search"
+  | "category_filter"
+  | "product_click"
+  | "product_view"
+  | "add_to_cart"
+  | "login_click"
+  | "guest_click"
+  | "navbar_click"
+  | "back_click"
+  | "LOGIN_SUCCESS"
+  | "LOGOUT"
+  | "CART_UPDATE"
+  | "CART_OPEN"
+  | "CHECKOUT_INITIATE"
+  | "PURCHASE_COMPLETED"
+  | "ML_TOGGLE"
+  | "SIGNUP_SUCCESS"
+  | "REGISTER_SUCCESS"
+  | "NAVIGATE_HOME";
 
 // Global event listeners for telemetry widget
-type TelemetryListener = (event: { type: EventType; payload: EventPayload }) => void;
+type TelemetryListener = (event: {
+  type: EventType;
+  payload: EventPayload;
+}) => void;
 const telemetryListeners: TelemetryListener[] = [];
 
 export function subscribeTelemetry(listener: TelemetryListener): () => void {
@@ -50,12 +53,12 @@ const generateEventId = (): string => {
 
 // Get or create session ID
 const getSessionId = (): string => {
-  if (typeof window === 'undefined') return 'server_session';
-  
-  let sessionId = sessionStorage.getItem('lakehouse_session_id');
+  if (typeof window === "undefined") return "server_session";
+
+  let sessionId = sessionStorage.getItem("lakehouse_session_id");
   if (!sessionId) {
     sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    sessionStorage.setItem('lakehouse_session_id', sessionId);
+    sessionStorage.setItem("lakehouse_session_id", sessionId);
   }
   return sessionId;
 };
@@ -73,9 +76,10 @@ export function logEvent(type: EventType, payload: EventPayload = {}): void {
     ...payload,
     // Add browser context
     context: {
-      userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      referrer: typeof window !== 'undefined' ? document.referrer : '',
+      userAgent:
+        typeof window !== "undefined" ? window.navigator.userAgent : "server",
+      url: typeof window !== "undefined" ? window.location.href : "",
+      referrer: typeof window !== "undefined" ? document.referrer : "",
     },
   };
 
@@ -88,10 +92,10 @@ export function logEvent(type: EventType, payload: EventPayload = {}): void {
   });
 
   // Fire-and-forget async HTTP POST - does NOT await to avoid blocking UI
-  fetch('http://localhost:8000/api/track', {
-    method: 'POST',
+  fetch("http://localhost:8000/api/track", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(enrichedPayload),
   }).catch(console.error); // Silently handle network failures
@@ -100,8 +104,11 @@ export function logEvent(type: EventType, payload: EventPayload = {}): void {
 /**
  * Track page views automatically
  */
-export function logPageView(pageName: string, metadata?: Record<string, unknown>): void {
-  logEvent('page_view', {
+export function logPageView(
+  pageName: string,
+  metadata?: Record<string, unknown>,
+): void {
+  logEvent("page_view", {
     pageName,
     ...metadata,
   });

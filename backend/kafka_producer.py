@@ -5,7 +5,6 @@ from typing import Any
 
 from confluent_kafka import KafkaException, Producer
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +41,9 @@ def produce_event(topic: str, event: dict[str, Any]) -> None:
         # Non-blocking poll to serve delivery callbacks.
         producer.poll(0)
     except BufferError:
-        logger.warning("Kafka producer queue is full; dropping event for topic '%s'", topic)
+        logger.warning(
+            "Kafka producer queue is full; dropping event for topic '%s'", topic
+        )
         producer.poll(0)
     except (KafkaException, TypeError, ValueError):
         logger.exception("Unexpected Kafka produce error for topic '%s'", topic)
