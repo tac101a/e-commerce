@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, X, Sparkles } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { logEvent } from '@/lib/tracking';
 
 interface SearchBarProps {
@@ -69,38 +69,25 @@ export function SearchBar({ onSearch }: SearchBarProps) {
         }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
         className={`
-          relative flex items-center gap-3 p-1.5 rounded-2xl
-          bg-white/5 border backdrop-blur-xl
-          transition-all duration-300
+          relative flex items-center gap-3 p-1.5 rounded-xl
+          bg-card border transition-all duration-300
           ${isFocused 
-            ? 'border-primary/50 shadow-lg shadow-primary/5' 
-            : 'border-white/10 hover:border-white/20'
+            ? 'border-foreground/20 shadow-lg shadow-foreground/5' 
+            : 'border-border hover:border-foreground/10'
           }
         `}
       >
-        {/* Glow effect */}
-        <AnimatePresence>
-          {isFocused && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-primary/5 rounded-2xl blur-xl -z-10"
-            />
-          )}
-        </AnimatePresence>
-
         <div className="relative flex-1 flex items-center">
           <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search products, categories, or brands..."
+            placeholder="Search smartphones, laptops, audio gear..."
             value={query}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             onKeyDown={handleKeyDown}
-            className="pl-12 pr-12 h-12 bg-transparent border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="pl-12 pr-12 h-11 bg-transparent border-0 text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0"
           />
           <AnimatePresence>
             {query && (
@@ -109,7 +96,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 onClick={handleClear}
-                className="absolute right-4 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors"
+                className="absolute right-4 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <X className="h-4 w-4" />
               </motion.button>
@@ -120,9 +107,8 @@ export function SearchBar({ onSearch }: SearchBarProps) {
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
             onClick={handleSearch}
-            className="h-10 px-6 rounded-xl bg-primary/90 hover:bg-primary"
+            className="h-9 px-5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <Sparkles className="mr-2 h-4 w-4" />
             Search
           </Button>
         </motion.div>

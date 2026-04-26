@@ -3,21 +3,25 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navbar } from '@/components/navbar';
-import { SearchBar } from '@/components/search-bar';
-import { CategoryFilters } from '@/components/category-filters';
 import { ProductGrid } from '@/components/product-grid';
 import { ProductDetail } from '@/components/product-detail';
+import { AuthModal } from '@/components/auth-modal';
+import { CartSheet } from '@/components/cart-sheet';
+
+import { TelemetryWidget } from '@/components/telemetry-widget';
 import { Product } from '@/components/product-card';
-import { logPageView, logEvent } from '@/lib/tracking';
+import { logPageView } from '@/lib/tracking';
+import { useCartStore } from '@/lib/cart-store';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
-import { Activity, Database, Zap, BarChart3, TrendingUp, Clock } from 'lucide-react';
+import { Activity, Zap } from 'lucide-react';
 
 export default function Home() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const { toast } = useToast();
+  const { addItem, openCart } = useCartStore();
 
   // Log page view on mount
   useEffect(() => {
@@ -26,20 +30,6 @@ export default function Home() {
       hasSearchQuery: false,
     });
   }, []);
-
-  const handleLogin = () => {
-    toast({
-      title: 'Login',
-      description: 'Login modal would open here. Event logged to Data Lakehouse.',
-    });
-  };
-
-  const handleGuest = () => {
-    toast({
-      title: 'Guest Mode',
-      description: 'Continuing as guest. Event logged to Data Lakehouse.',
-    });
-  };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -62,6 +52,8 @@ export default function Home() {
   };
 
   const handleAddToCart = (product: Product) => {
+    addItem(product);
+    openCart();
     toast({
       title: 'Added to Cart',
       description: `${product.name} added. Check console for telemetry.`,
@@ -77,14 +69,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background Effects */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-chart-1/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-chart-2/5 rounded-full blur-3xl" />
-      </div>
-
-      <Navbar onLoginClick={handleLogin} onGuestClick={handleGuest} />
+      <Navbar />
+      <AuthModal />
+      <CartSheet />
       
       <main className="container mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
@@ -111,78 +98,43 @@ export default function Home() {
               transition={{ duration: 0.3 }}
               className="space-y-8"
             >
-              {/* Dashboard Header */}
+              {/* Welcome Banner */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="space-y-4"
+                className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 p-6"
               >
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: 'spring', delay: 0.2 }}
-                    className="p-3 rounded-2xl bg-primary/10 backdrop-blur-xl border border-primary/20"
-                  >
-                    <Database className="h-8 w-8 text-primary" />
-                  </motion.div>
+                <div className="flex items-center justify-between flex-wrap gap-4">
                   <div>
-                    <h1 className="text-3xl font-bold text-foreground tracking-tight">
-                      Product Dashboard
+                    <h1 className="text-2xl font-semibold text-foreground tracking-tight">
+                      Welcome to the Store
                     </h1>
-                    <p className="text-muted-foreground">
-                      Enterprise analytics with real-time Data Lakehouse telemetry
+                    <p className="text-muted-foreground text-sm mt-1">
+                      Data Lakehouse demo with real-time ML recommendations
                     </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border">
+                      <Activity className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Live Session</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Real-time Events</span>
+                    </div>
                   </div>
                 </div>
               </motion.div>
-
-              {/* Stats Banner - Bento Style */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="grid grid-cols-2 md:grid-cols-4 gap-4"
-              >
-                <GlassStatCard
-                  icon={Activity}
-                  label="Session Status"
-                  value="Active"
-                  trend="+12%"
-                  color="chart-2"
-                />
-                <GlassStatCard
-                  icon={Zap}
-                  label="Events Captured"
-                  value="Real-time"
-                  trend="Live"
-                  color="chart-4"
-                />
-                <GlassStatCard
-                  icon={BarChart3}
-                  label="Active Filter"
-                  value={activeCategory === 'all' ? 'All Categories' : activeCategory}
-                  color="chart-1"
-                />
-                <GlassStatCard
-                  icon={Clock}
-                  label="Search Query"
-                  value={searchQuery || 'None'}
-                  color="primary"
-                />
-              </motion.div>
-
-              {/* Search & Filters */}
-              <div className="space-y-4">
-                <SearchBar onSearch={handleSearch} />
-                <CategoryFilters onCategoryChange={handleCategoryChange} />
-              </div>
 
               {/* Product Grid */}
               <ProductGrid
                 onProductClick={handleProductClick}
                 onAddToCart={handleAddToCart}
+                searchQuery={searchQuery}
+                activeCategory={activeCategory}
+                onSearch={handleSearch}
+                onCategoryChange={handleCategoryChange}
               />
             </motion.div>
           )}
@@ -190,50 +142,7 @@ export default function Home() {
       </main>
 
       <Toaster />
+      <TelemetryWidget />
     </div>
-  );
-}
-
-// Glass morphism stat card component
-function GlassStatCard({ 
-  icon: Icon, 
-  label, 
-  value, 
-  trend,
-  color = 'primary'
-}: { 
-  icon: React.ElementType;
-  label: string; 
-  value: string;
-  trend?: string;
-  color?: string;
-}) {
-  return (
-    <motion.div
-      whileHover={{ y: -4, scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className="group relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-5 hover:border-white/20 transition-all duration-300"
-    >
-      {/* Glow effect */}
-      <div className={`absolute -inset-px bg-${color}/20 opacity-0 group-hover:opacity-100 rounded-2xl blur-xl transition-opacity duration-500`} />
-      
-      <div className="relative space-y-3">
-        <div className="flex items-center justify-between">
-          <div className={`p-2 rounded-xl bg-${color}/10`}>
-            <Icon className={`h-4 w-4 text-${color}`} />
-          </div>
-          {trend && (
-            <span className="flex items-center gap-1 text-xs font-medium text-chart-2">
-              <TrendingUp className="h-3 w-3" />
-              {trend}
-            </span>
-          )}
-        </div>
-        <div>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{label}</p>
-          <p className="text-sm font-semibold text-foreground mt-1 truncate">{value}</p>
-        </div>
-      </div>
-    </motion.div>
   );
 }

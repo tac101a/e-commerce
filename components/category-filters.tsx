@@ -5,22 +5,22 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { logEvent } from '@/lib/tracking';
 import { 
+  Smartphone, 
   Laptop, 
-  Shirt, 
-  Home, 
-  Dumbbell, 
-  BookOpen, 
+  Headphones, 
+  Watch, 
+  Monitor,
   Gamepad2,
   LayoutGrid
 } from 'lucide-react';
 
 const categories = [
   { id: 'all', name: 'All', icon: LayoutGrid },
-  { id: 'electronics', name: 'Electronics', icon: Laptop },
-  { id: 'clothing', name: 'Clothing', icon: Shirt },
-  { id: 'home', name: 'Home & Garden', icon: Home },
-  { id: 'sports', name: 'Sports', icon: Dumbbell },
-  { id: 'books', name: 'Books', icon: BookOpen },
+  { id: 'smartphones', name: 'Smartphones', icon: Smartphone },
+  { id: 'laptops', name: 'Laptops', icon: Laptop },
+  { id: 'audio', name: 'Audio', icon: Headphones },
+  { id: 'wearables', name: 'Wearables', icon: Watch },
+  { id: 'monitors', name: 'Monitors', icon: Monitor },
   { id: 'gaming', name: 'Gaming', icon: Gamepad2 },
 ];
 
@@ -82,17 +82,17 @@ export function CategoryFilters({ onCategoryChange }: CategoryFiltersProps) {
                   size="sm"
                   onClick={() => handleCategoryClick(category.id, category.name)}
                   className={`
-                    relative px-4 py-2 rounded-xl backdrop-blur-sm transition-all duration-300
+                    relative px-4 py-2 rounded-lg transition-all duration-300
                     ${isActive 
-                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
-                      : 'bg-white/5 text-muted-foreground hover:text-foreground hover:bg-white/10 border border-white/10'
+                      ? 'bg-primary text-primary-foreground shadow-md' 
+                      : 'bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80 border border-border'
                     }
                   `}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="activeCategory"
-                      className="absolute inset-0 bg-primary rounded-xl"
+                      className="absolute inset-0 bg-primary rounded-lg"
                       transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
                     />
                   )}

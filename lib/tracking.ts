@@ -1,5 +1,5 @@
 // Telemetry utility for E-commerce Data Lakehouse
-// All events are logged with timestamps and can be sent to analytics backends
+// All events are logged with timestamps and sent via fire-and-forget HTTP POST
 
 export type EventType =
   | 'page_view'
@@ -11,7 +11,29 @@ export type EventType =
   | 'login_click'
   | 'guest_click'
   | 'navbar_click'
-  | 'back_click';
+  | 'back_click'
+  | 'LOGIN_SUCCESS'
+  | 'LOGOUT'
+  | 'CART_UPDATE'
+  | 'CART_OPEN'
+  | 'CHECKOUT_INITIATE'
+  | 'PURCHASE_COMPLETED'
+  | 'ML_TOGGLE'
+  | 'SIGNUP_SUCCESS'
+  | 'REGISTER_SUCCESS'
+  | 'NAVIGATE_HOME';
+
+// Global event listeners for telemetry widget
+type TelemetryListener = (event: { type: EventType; payload: EventPayload }) => void;
+const telemetryListeners: TelemetryListener[] = [];
+
+export function subscribeTelemetry(listener: TelemetryListener): () => void {
+  telemetryListeners.push(listener);
+  return () => {
+    const index = telemetryListeners.indexOf(listener);
+    if (index > -1) telemetryListeners.splice(index, 1);
+  };
+}
 
 export interface EventPayload {
   eventId?: string;
@@ -40,7 +62,7 @@ const getSessionId = (): string => {
 
 /**
  * Log an event to the Data Lakehouse
- * In production, this would send data to your analytics backend
+ * Uses fire-and-forget async HTTP POST - does NOT block the UI
  */
 export function logEvent(type: EventType, payload: EventPayload = {}): void {
   const enrichedPayload = {
@@ -57,11 +79,22 @@ export function logEvent(type: EventType, payload: EventPayload = {}): void {
     },
   };
 
-  // Log to console in development (simulating lakehouse ingestion)
+  // Log to console for local debugging
   console.log(`[DataLakehouse] Event: ${type}`, enrichedPayload);
 
-  // In production, you would send this to your analytics endpoint:
-  // fetch('/api/analytics', { method: 'POST', body: JSON.stringify(enrichedPayload) });
+  // Notify all telemetry listeners
+  telemetryListeners.forEach((listener) => {
+    listener({ type, payload: enrichedPayload });
+  });
+
+  // Fire-and-forget async HTTP POST - does NOT await to avoid blocking UI
+  fetch('/api/track', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(enrichedPayload),
+  }).catch(console.error); // Silently handle network failures
 }
 
 /**

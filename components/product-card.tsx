@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Star, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Star, TrendingUp, Smartphone, Laptop, Headphones, Watch, Monitor, Gamepad2 } from 'lucide-react';
 import { logEvent } from '@/lib/tracking';
+import { useCartStore } from '@/lib/cart-store';
 
 export interface Product {
   id: string;
@@ -20,11 +21,20 @@ export interface Product {
 interface ProductCardProps {
   product: Product;
   onProductClick?: (product: Product) => void;
-  onAddToCart?: (product: Product) => void;
-  featured?: boolean;
 }
 
-export function ProductCard({ product, onProductClick, onAddToCart, featured = false }: ProductCardProps) {
+const categoryIcons: Record<string, React.ElementType> = {
+  Smartphones: Smartphone,
+  Laptops: Laptop,
+  Audio: Headphones,
+  Wearables: Watch,
+  Monitors: Monitor,
+  Gaming: Gamepad2,
+};
+
+export function ProductCard({ product, onProductClick }: ProductCardProps) {
+  const { addItem, openCart } = useCartStore();
+
   const handleCardClick = () => {
     logEvent('product_click', {
       action: 'product_card_clicked',
@@ -39,7 +49,13 @@ export function ProductCard({ product, onProductClick, onAddToCart, featured = f
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
+    
+    // Add item to cart (strictly once)
+    addItem(product);
+    
+    // Log add_to_cart event
     logEvent('add_to_cart', {
       action: 'add_to_cart_clicked',
       productId: product.id,
@@ -49,41 +65,42 @@ export function ProductCard({ product, onProductClick, onAddToCart, featured = f
       quantity: 1,
       cartAction: 'add',
     });
-    onAddToCart?.(product);
+
+    // Log CART_UPDATE event
+    logEvent('CART_UPDATE', {
+      productId: product.id,
+      productName: product.name,
+      action: 'add',
+      timestamp: new Date().toISOString(),
+    });
+
+    // Open cart sheet
+    openCart();
   };
 
   const discount = product.originalPrice 
     ? Math.round((1 - product.price / product.originalPrice) * 100) 
     : 0;
 
+  const IconComponent = categoryIcons[product.category] || Smartphone;
+
   return (
     <motion.div
-      whileHover={{ y: -8, scale: 1.02 }}
+      whileHover={{ y: -6 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       onClick={handleCardClick}
-      className={`
-        group cursor-pointer overflow-hidden rounded-2xl
-        bg-white/5 backdrop-blur-xl border border-white/10
-        hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/10
-        transition-all duration-300
-        ${featured ? 'row-span-2' : ''}
-      `}
+      className="group cursor-pointer h-full overflow-hidden rounded-xl bg-card border border-border hover:border-foreground/20 hover:shadow-xl hover:shadow-foreground/5 transition-all duration-300"
     >
       {/* Image Area */}
-      <div className={`relative ${featured ? 'aspect-[4/3]' : 'aspect-square'} bg-gradient-to-br from-white/5 to-transparent flex items-center justify-center overflow-hidden`}>
+      <div className="relative aspect-square bg-muted flex items-center justify-center overflow-hidden">
         <motion.div
           initial={{ scale: 1 }}
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.4 }}
-          className="text-6xl opacity-30"
+          className="flex items-center justify-center"
         >
-          {product.category === 'Electronics' && '🎧'}
-          {product.category === 'Clothing' && '👕'}
-          {product.category === 'Home' && '🏠'}
-          {product.category === 'Sports' && '🏋️'}
-          {product.category === 'Books' && '📚'}
-          {product.category === 'Gaming' && '🎮'}
+          <IconComponent className="h-16 w-16 text-muted-foreground/40" />
         </motion.div>
         
         {/* Badges */}
@@ -92,7 +109,7 @@ export function ProductCard({ product, onProductClick, onAddToCart, featured = f
             <motion.span
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              className="bg-chart-5/90 backdrop-blur-sm text-background text-xs font-bold px-2.5 py-1 rounded-lg"
+              className="bg-chart-3 text-white text-xs font-semibold px-2 py-1 rounded-md"
             >
               -{discount}%
             </motion.span>
@@ -102,17 +119,17 @@ export function ProductCard({ product, onProductClick, onAddToCart, featured = f
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-chart-2/90 backdrop-blur-sm text-background text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1"
+              className="bg-chart-2 text-white text-xs font-semibold px-2 py-1 rounded-md flex items-center gap-1"
             >
               <TrendingUp className="h-3 w-3" />
-              Top Rated
+              Popular
             </motion.span>
           )}
         </div>
 
         {/* Out of Stock Overlay */}
         {!product.inStock && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
             <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
               Out of Stock
             </span>
@@ -121,31 +138,31 @@ export function ProductCard({ product, onProductClick, onAddToCart, featured = f
       </div>
 
       {/* Content */}
-      <div className="p-5 space-y-4">
+      <div className="p-4 space-y-3">
         {/* Category */}
         <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
           {product.category}
         </span>
 
         {/* Title */}
-        <h3 className={`font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors ${featured ? 'text-lg' : 'text-sm'}`}>
+        <h3 className="font-medium text-foreground text-sm line-clamp-2 group-hover:text-foreground/80 transition-colors min-h-[2.5rem]">
           {product.name}
         </h3>
 
         {/* Rating */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 rounded-lg bg-white/5">
-            <Star className="h-3.5 w-3.5 fill-chart-4 text-chart-4" />
-            <span className="text-sm font-medium">{product.rating.toFixed(1)}</span>
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-muted">
+            <Star className="h-3 w-3 fill-chart-4 text-chart-4" />
+            <span className="text-xs font-medium text-foreground">{product.rating.toFixed(1)}</span>
           </div>
           <span className="text-xs text-muted-foreground">
-            ({product.reviewCount.toLocaleString()} reviews)
+            ({product.reviewCount.toLocaleString()})
           </span>
         </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-2">
-          <span className={`font-bold text-foreground ${featured ? 'text-2xl' : 'text-xl'}`}>
+          <span className="text-lg font-semibold text-foreground">
             ${product.price.toFixed(2)}
           </span>
           {product.originalPrice && (
@@ -159,7 +176,7 @@ export function ProductCard({ product, onProductClick, onAddToCart, featured = f
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
             size="sm"
-            className="w-full rounded-xl bg-primary/90 hover:bg-primary backdrop-blur-sm"
+            className="w-full rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={handleAddToCart}
             disabled={!product.inStock}
           >
